@@ -1,0 +1,7 @@
+eqnE = diff(E,t) == s-mu*E+p*((E*T)/(h+T))-m*E*T-KE*M*E;
+condE = E(0) == 3e4;
+
+eqnT = diff(T,t) == r*T*(1-b*T)-a*((E*T)/(T+g))-KT*M*T;
+condT = T(0) == 4e4;
+
+eqnM = diff(M,t) == -y*M+u;
