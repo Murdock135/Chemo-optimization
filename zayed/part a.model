@@ -1,0 +1,161 @@
+#####################################################################
+# Pauline student model based on the paper by
+#weighted functional  w1 * \int T(t) dt  + (1-w1)* \int  u(t) dt
+###################################################################
+
+# terminal time  tf , number n  of grid and stepsize  h
+param tf := 30;  
+param n :=3000 ;
+param h := tf/n;
+
+## delay tau : here not needed
+## param tau := 0 ;
+## param ret := floor(tau/h)  ; 
+
+## weights w1  and w2 = 1-w1  in functional
+param w1 := 0.000001;
+param w2 := 1-w1;
+
+## INITIAL VALUES
+
+param E0 := 3e4; 
+param T0 := 4e4;
+param M0 := 0.0;
+
+## Eventual TERMINAL VALUES 
+
+param p = 0.015;
+param r = 4.31e-3;
+param b = 10e-9;
+param a = 3.41e-10;
+param g = 10e5;
+param s = 1.2e4;
+param m = 2e-11;
+param myu = 4.12e-2;
+param ganma = 0.9;
+param h1 = 2.02e11;
+param KE = 6.00e-1;
+param KT = 8.00e-1;
+
+
+
+
+
+####  state variables  ###########
+
+
+var E {i in 0..n}, >= 0 ;
+s.t. lE0 : E[0] = E0 ;
+
+var T {i in 0..n}, >= 0 ;
+s.t. lT0 : T[0] = T0 ;
+# s.t. lTf : N[n] = Tf ;
+ 
+var M {i in 0..n}, >= 0  ;
+s.t. lM0 : M[0] =M0 ;
+
+var int {i in 0..n}  ;
+s.t. lint0 : int[0] = 0 ;
+
+#####   control variable and constraints  #########
+
+##param U{i in 0..n} := 0 ;
+ var U{i in 0..n} :,>= 0, <= 10 ;
+
+# Right hand sides of ODEs
+
+
+ var fE {i in 0..n} =s-myu*E[i]+p*E[i]*T[i]/(h1+T[i])-m*E[i]*T[i]- KE*M[i]*E[i];
+
+ var fT {i in 0..n} =r*T[i]*(1-b*T[i]) - a*E[i]*T[i]/(T[i]+g) - KT*M[i]*T[i];
+ 
+ var fM {i in 0..n} = -ganma*M[i] +U[i];
+
+#dydt(1)= s - myu*y(1) + p*((y(1)*y(2))/(h+y(2)))- m*y(1)*y(2) - KE*y(3)*y(1);
+#dydt(2)= r*y(2)*(1 - b*y(2)) - a*((y(1)*y(2))/(y(2) + g)) - KT*y(3)*y(2);
+#dydt(3)= -ganma*y(3) + u; %u=Vm(t)=drug dosage applied
+
+
+## cost function
+
+var fint {i in 0..n} = w2*T[i]/1 + w1*U[i];
+
+##var Phi {i in 0..n} = w2- lambda_M[i];
+
+
+# OBJECTIVE
+
+# maximize obj : -int[n];
+ minimize obj : int[n];
+
+## ODEs : Implicit Euler
+
+## s.t. lambda_N {i in 0..n-1} : N[i+1] = N[i] + h*( fN[i+1]);
+## s.t. lambda_T {i in 0..n-1} : T[i+1] = T[i] + h*( fT[i+1]);
+## s.t. lambda_I {i in 0..n-1} : I[i+1] = I[i] + h*( fI[i+1]);
+
+##  s.t. lambda_int {i in 0..n-1} : int[i+1] = int[i] + h*( fint[i+1]);
+
+# ODEs : Trapezoidal rule
+
+ s.t. lambda_E {i in 0..n-1} : E[i+1] = E[i] + 0.5*h*( fE[i]+fE[i+1]) ;
+ s.t. lambda_T {i in 0..n-1} : T[i+1] = T[i] + 0.5*h*( fT[i]+fT[i+1]) ;
+ s.t. lambda_M {i in 0..n-1} : M[i+1] = M[i] + 0.5*h*( fM[i]+fM[i+1]) ;
+ s.t. lambda_int {i in 0..n-1} : int[i+1] = int[i] + 0.5*h*(fint[i]+ fint[i+1]) ;
+
+ ##ODEs : Euler
+
+# s.t. lambda_E {i in 0..n-1} : E[i+1] = E[i] + h*( fE[i]);
+# s.t. lambda_T {i in 0..n-1} : T[i+1] = T[i] + h*( fT[i]);
+# s.t. lambda_M {i in 0..n-1} : M[i+1] = M[i] + h*( fM[i]);
+# s.t. lambda_int {i in 0..n-1} : int[i+1] = int[i] + h*( fint[i]);
+
+
+
+##  SOLVE with LOQO or IPOPT
+
+# Solver LOQO
+
+# option abs_boundtol 1;                                                
+# option solver loqo;                                                 
+# option loqo_options "verbose=1 maxit=2000 inftol=1e-10 timing=1";  
+
+# Solver IPOPT
+   option abs_boundtol 1;
+#   option show_boundtol 0;
+
+ option solver ipopt;
+ option ipopt_options "max_iter=10000 tol=1e-8";
+
+# suffix ipopt_zU_out LOCAL;
+# suffix ipopt_zL_out LOCAL;
+
+solve;
+
+# PRINT SOLUTION DATA
+
+printf {i in 0..n}  "%18.10e%18.10e\n",  i*h, E[i] > 'E.dat';
+printf {i in 0..n}  "%18.10e%18.10e\n",  i*h, T[i] > 'T.dat';
+printf {i in 0..n}  "%18.10e %18.10e\n", i*h, M[i] > 'M.dat';
+printf {i in  0..n} "%18.10e %18.10e\n", i*h, int[i] > 'int.dat';
+
+printf {i in  1..n} "%18.10f%18.10f\n", i*h, U[i]   > 'U.dat';
+## switching function  Phi(t)  of Maximum Principle  
+ ##printf {i in 0..n-1} "%18.10f%18.10f\n", i*h,Phi[i]  > 'Phi.dat';
+
+## switching function  Phi(t)  of Maximum Principle  
+ printf {i in 0..n-1} "%18.10f%18.10f\n", i*h, lambda_M[i] + w1   > 'Phi.dat';
+
+
+## print adjoint variables
+
+ printf {i in 0..n-1} "%18.10f%18.10f\n", i*h, -lambda_E[i]   > 'lambda-E.dat';
+ printf {i in 0..n-1} "%18.10f%18.10f\n", i*h, -lambda_T[i]   > 'lambda-T.dat';
+ printf {i in 0..n-1} "%18.10f%18.10f\n", i*h, -lambda_M[i]   > 'lambda-M.dat';
+
+ printf  "%18.10f%18.10f %18.10f %18.10f ", obj, E[n], T[n], M[n]  > 'OBJ-E-T-M-tf.dat';
+ printf  "%18.10f%18.10f %18.10f %18.10f ", obj, -lE0, -lT0, -lM0 > 'OBJ-lambda-0.dat';
+ end;
+
+
+display  n,obj,E,T,M,U;
