@@ -1,0 +1,44 @@
+clc; clear all;
+
+%% parameters
+global s mu  p m r b a g h y KE KT umax umin
+s = 1.2e4;
+mu  = 4.12e-2;
+p = 0.015;
+m = 2e-11;
+r = 4.31e-3;
+b = 10^-9;
+a = 3.41e-10;
+g = 10^5;
+h = 2.2;
+y = 0.9;
+KE = 6e-1;
+KT = 8e-1;
+umax = 1;
+umin = 0;
+%% Setting the window
+tspan = linspace(0,1000,100000); % subdiving t=[t0 tf] into N subintervals
+%% Initial conditions
+E(1)= 30e3;
+M(1) = 0;
+T(1) = 40e3;
+u = umin*tspan; % no chemo drug in the beginning
+%% Equations
+% x(1)=E
+% x(2)=T
+% x(3)=M
+
+
+% odes = @(x,t,u) [s-mu*x(1)+p*((x(1)*x(2))/(h+x(2)))-m*x(1)*m(2)-KE*x(3)*m(1);
+%                r*x(2)*(1-b*x(2))-a*((x(1)*x(2))/(x(2)*g))-KT*x(3)*x(2);
+%                -y*x(3)+u;
+%                u+x(2)];
+% 
+% 
+% [t, x]=ode45(@(x,t) odes(t,x,u),tspan,[ E(1) M(1) T(1) u(1)]);
+max_
+for i=1:max_iter
+
+
+
+

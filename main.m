@@ -1,7 +1,9 @@
-%% parameters
+clc; clear all; close all;
 
+%% parameters
+global s mu  p m r b a g h y KE KT umax umin w1 w2
 s = 1.2e4;
-mu = 4.12e-2;
+mu  = 4.12e-2;
 p = 0.015;
 m = 2e-11;
 r = 4.31e-3;
@@ -12,21 +14,36 @@ h = 2.2;
 y = 0.9;
 KE = 6e-1;
 KT = 8e-1;
-%% solving state equations
+umax = 1;
+umin = 0;
+w1 = 1;
+w2 = 1;
+%% Setting the window
+tspan = linspace(0,1000,100000); % subdiving t=[t0 tf] into N subintervals
+%% Initial conditions
+E0= 30e3;
+T0 = 40e3;
+M0 = 0;
+x0 = [E0 T0 M0]; % storing the initial values
+u = 0*tspan; % no chemo drug in the beginning
+% u=3
+%% Solving the optimal control problem
 
-syms E(t) T(t) M(t) u(t)
 
-eqnE = diff(E,t) == s-mu*E+p*((E*T)/(h+T))-m*E*T-KE*M*E;
-condE = E(0) == 3e4;
 
-eqnT = diff(T,t) == r*T*(1-b*T)-a*((E*T)/(T+g))-KT*M*T;
-condT = T(0) == 4e4;
+% max_iter = 500;
+% for i=1:max_iter
+    [Tx,X] = ode45(@(t,x) states(t,x,u), tspan, x0); % getting the state trajectory for current u
+    E = X(:,1);
+    T = X(:,2);
+    M = X(:,3);
 
-eqnM = diff(M,t) == -y*M+u;
-condM = M(0) == 0;
-condu = u(0) == 0;
+    % solving the costate equations
+    pfinal = [0 0 0]; % free-end problem
+    tspan_reversed = flip(tspan);
+    [Tp,P] = ode45(@(t,p) costateEq(), tspan_reversed, pfinal)
 
-eqns = [eqnE;eqnT;eqnM]
+% end
 
 
 

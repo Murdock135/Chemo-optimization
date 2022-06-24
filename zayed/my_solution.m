@@ -4,6 +4,10 @@ clear all
 clear figure
 clc
 format long
+<<<<<<< HEAD
+=======
+close all
+>>>>>>> version3
 
 %% values of the parameters 
 
