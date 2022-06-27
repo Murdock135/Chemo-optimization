@@ -37,7 +37,7 @@ u = 0*interval; % no chemo drug in the beginning
     E = X(:,1);
     T = X(:,2);
     M = X(:,3);
-    J = X(:,4);
+    J1 = X(:,4);
 
     % solving the costate equations (backwards)
     pfinal = [0 0 0]; % free-end problem
@@ -45,19 +45,38 @@ u = 0*interval; % no chemo drug in the beginning
 
     [Tp,P_reverse] = ode45(@(t,p) costateEq(t,p,E,T,M,u,Tx), interval_reversed, pfinal);
     P = flip(P_reverse); % getting costate trajectory (forwards)
-
+    p1 = P(:,1);
+    p2 = P(:,2);
+    p3 = P(:,3);
     % computing the cost at every time point/step
-    
+    u = u';
+    J2 = u+T; 
+    J = [J1 J2];
+    % Computing dH/du
+    H = u+T+p1.*(s-mu.*E+k.*((E.*T)./(h+T))-m.*E.*T-KE.*M.*E)...
+        +p2.*(r.*T.*(1-b.*T)-a.*((E.*T)./(T.*g))-KT.*M.*T)...
+        +p3.*(-y.*M+u);
+
 % end
 
 %% plot of state trajectory
+figure(1)
 plot(E)
 hold on
 plot(T)
 hold on
 plot(M)
-hold on
+
+legend('E','T','M')
+title('state trajectory')
+
+figure(2)
 plot(J)
-legend('E','T','M','J')
+hold on
+plot(H)
+legend('J','dH/du')
+title('cost, H and dH/du')
+
+
 
 
